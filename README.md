@@ -10,16 +10,16 @@ __Download and install steps__
   4) Open a new Anaconda prompt and create a virtual environment by using the command `conda create --name myenv`
   5) Activate the new environment by using the command `activate myenv`
   6) Install all following repositories by using the command `pip install {module name}`
-    - opencv-python
-    - torch
-    - pandas
-    - requests
-    - pillow
-    - yq
-    - tqdm
-    - torchvision
-    - matplotlib
-    - seaborn
+      - opencv-python
+      - torch
+      - pandas
+      - requests
+      - pillow
+      - yq
+      - tqdm
+      - torchvision
+      - matplotlib
+      - seaborn
   7) Download and install the YOLOV5 repository at https://github.com/ultralytics/yolov5 
   8) Navigate inside the directory of the ODChess folder by using the command cd path/to/ODChess
   9) Copy the path to the YOLOV5 directory, which was installed in step 5, on to the clipboard
