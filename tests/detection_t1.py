@@ -75,13 +75,15 @@ def run(
     view_img = check_imshow()
     cudnn.benchmark = True  # set True to speed up constant image size inference
     dataset = LoadStreams(source, img_size=imgsz, stride=stride, auto=pt)
-    bs = len(dataset)  # batch_size
 
     # Run inference
     if pt and device.type != 'cpu':
         model(torch.zeros(1, 3, *imgsz).to(device).type_as(next(model.parameters())))  # run once
     dt, seen = [0.0, 0.0, 0.0], 0
-    for path, img, im0s, vid_cap in dataset:
+
+    # print("Dataset: ", dataset)
+
+    for path, img, im0s, __vidcap in dataset:
         t1 = time_sync()
         ## CHANGE if onnx:
         img = torch.from_numpy(img).to(device)
@@ -105,11 +107,13 @@ def run(
         if classify:
             pred = apply_classifier(pred, modelc, img, im0s)
 
+        # print("Predictions: ", pred)
+
         # Process predictions
         for i, det in enumerate(pred):  # per image
             seen += 1
             if webcam:  # batch_size >= 1
-                p, s, im0, frame = path[i], f'{i}: ', im0s[i].copy(), dataset.count
+                p, s, im0, __frame = path[i], f'{i}: ', im0s[i].copy(), dataset.count
 
             p = Path(p)  # to Path
             s += '%gx%g ' % img.shape[2:]  # print string
