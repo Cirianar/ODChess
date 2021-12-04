@@ -7,9 +7,10 @@ __Download and install steps__
   1) Download this repository as a ZIP file and extract its content
   2) Download and install Anaconda
   3) Download and install Python3
-  4) Open a new Anaconda prompt and create a virtual environment by using the command `conda create --name myenv`
-  5) Activate the new environment by using the command `activate myenv`
-  6) Install all following repositories by using the command `pip install {module name}`
+  4) Open a new Anaconda prompt and create a virtual environment by using the command `$ conda create --name myenv`
+  5) Activate the new environment by using the command `$ activate myenv`
+  6) Install all following repositories by using the command `$ pip install {module name}`
+      Module names:
       - opencv-python
       - torch
       - pandas
@@ -20,10 +21,9 @@ __Download and install steps__
       - torchvision
       - matplotlib
       - seaborn
-  7) Download and install the YOLOV5 repository at https://github.com/ultralytics/yolov5 
-  8) Navigate inside the directory of the ODChess folder by using the command cd path/to/ODChess
-  9) Copy the path to the YOLOV5 directory, which was installed in step 5, on to the clipboard
-  10) Use the following command to activate the object detection of chess pieces:
-      `python ODChess.py --yolov5 path\\to\\yolov5_directory --source 0 --weights C:\Users\aidan\Desktop\ODChess\data\models\model_yolo5_v1\checkpoint\best.pt`
-      *Make sure to replace each “\” in the path to the YOLOV5 directory with a double “\\” when pasting it into the command*
+
+__Usage__
+  1) Activate the new environment whihc was created in the install steps by using the command `$ activate myenv`
+  2) Navigate to the ODChess directory by using the command `$ cd path\\to\\ODChess`
+  3) Run the program by using the command `$ python ODChess.py`
 
