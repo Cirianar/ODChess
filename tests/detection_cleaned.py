@@ -179,3 +179,126 @@ class ObjectDetector:
 
         self.check_requirements(exclude=('tensorboard', 'thop'))
         self.run()
+
+"""
+@torch.no_grad()
+def run(
+        weights,  # model.pt path(s)
+        source,  # file/dir/URL/glob, 0 for webcam
+        imgsz,  # inference size (pixels)
+        conf_thres,  # confidence threshold
+        iou_thres,  # NMS IOU threshold
+        max_det,  # maximum detections per image
+        device,  # cuda device, i.e. 0 or 0,1,2,3 or cpu
+        view_img,  # show results
+        classes,  # filter by class: --class 0, or --class 0 2 3
+        agnostic_nms,  # class-agnostic NMS
+        augment,  # augmented inference
+        line_thickness,  # bounding box thickness (pixels)
+        hide_labels,  # hide labels
+        hide_conf,  # hide confidences
+        half,  # use FP16 half-precision inference
+        ):
+    source = str(source)
+    webcam = True
+
+    # Initialize
+    set_logging()
+    device = select_device(device)
+    half &= device.type != 'cpu'  # half precision only supported on CUDA
+
+    # Load model
+    stride, names = 64, [f'class{i}' for i in range(1000)]  # assign defaults
+    classify = False
+    pt = ".pt"
+
+    model = attempt_load(weights, map_location=device)
+    stride = int(model.stride.max())  # model stride
+    names = model.names  # get class names
+
+    if half:
+        model.half()  # to FP16
+    if classify:  # second-stage classifier
+        modelc = load_classifier(name='resnet50', n=2)  # initialize
+        modelc.load_state_dict(torch.load('resnet50.pt', map_location=device)['model']).to(device).eval()
+
+    # Dataloader
+    view_img = check_imshow()
+    cudnn.benchmark = True  # set True to speed up constant image size inference
+    dataset = LoadStreams(source, img_size=imgsz, stride=stride, auto=pt)
+    bs = len(dataset)  # batch_size
+
+    # Run inference
+    if pt and device.type != 'cpu':
+        model(torch.zeros(1, 3, *imgsz).to(device).type_as(next(model.parameters())))  # run once
+    dt, seen = [0.0, 0.0, 0.0], 0
+    for path, img, im0s, vid_cap in dataset:
+        t1 = time_sync()
+        ## CHANGE if onnx:
+        img = torch.from_numpy(img).to(device)
+        img = img.half() if half else img.float()  # uint8 to fp16/32
+        img /= 255.0  # 0 - 255 to 0.0 - 1.0
+        if len(img.shape) == 3:
+            img = img[None]  # expand for batch dim
+        t2 = time_sync()
+        dt[0] += t2 - t1
+
+        # Inference
+        pred = model(img, augment=augment, visualize=False)[0]
+        t3 = time_sync()
+        dt[1] += t3 - t2
+
+        # NMS
+        pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+        dt[2] += time_sync() - t3
+
+        # Second-stage classifier (optional)
+        if classify:
+            pred = apply_classifier(pred, modelc, img, im0s)
+
+        # Process predictions
+        for i, det in enumerate(pred):  # per image
+            seen += 1
+            if webcam:  # batch_size >= 1
+                p, s, im0, frame = path[i], f'{i}: ', im0s[i].copy(), dataset.count
+
+            p = Path(p)  # to Path
+            s += '%gx%g ' % img.shape[2:]  # print string
+            annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+            if len(det):
+                # Rescale boxes from img_size to im0 size
+                det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
+
+                # Print results
+                for c in det[:, -1].unique():
+                    n = (det[:, -1] == c).sum()  # detections per class
+                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+
+                # Write results
+                for *xyxy, conf, cls in reversed(det):
+
+                    # Draws boxes on image
+                    if view_img:
+                        c = int(cls)  # integer class
+                        label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
+                        annotator.box_label(xyxy, label, color=colors(c, True))
+
+            # Print time (inference-only)
+            print(f'{s}Done. ({t3 - t2:.3f}s)')
+
+            # Stream results
+            im0 = annotator.result()
+            if view_img:
+                cv2.imshow(str(p), im0)
+                cv2.waitKey(1)  # 1 millisecond
+
+    # Print results
+    t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
+    print(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {(1, 3, *imgsz)}' % t)
+
+def main(opt):
+    print_args(FILE.stem, opt)
+
+    check_requirements(exclude=('tensorboard', 'thop'))
+    run(**vars(opt))
+"""

@@ -1,5 +1,26 @@
+# Chess piece object detection inference by Aidan Tiede using YOLOv5 & Google COLAB model and modules
+"""
+Run inference streams using a YOLOv5 .pt model.
+
+Required dependencies:
+    - Python3
+
+Required modules
+    - opencv-python
+    - Torch
+    - Pandas
+    - Requests
+    - pillow
+    - Yq
+    - Tqdm
+    - Torchvision
+    - Matplotlib
+    - seaborn
+
+Usage:
+    $ python path/to/ODChess.py
+"""
 import argparse
-# import torch
 
 from libs.detection import ObjectDetector
 from libs.camera import Camera
@@ -10,9 +31,8 @@ def buildObjectDetector(opt):
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--yolov5', nargs='+', type=str, default='C:\\tensorflow\\yolov5', help='path to yolov5 library (https://github.com/ultralytics/yolov5)')
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model path(s)')
-    parser.add_argument('--source', type=str, default='data/images', help='0 for webcam')
+    parser.add_argument('--source', type=str, default='0', help='0 for webcam')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.5, help='confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='NMS IoU threshold')
