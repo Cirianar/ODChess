@@ -23,8 +23,6 @@ Usage:
 import argparse
 
 from libs.detection import ObjectDetector
-from libs.camera import Camera
-from libs.window import Window
 
 def buildObjectDetector(opt):
     return ObjectDetector(**vars(opt))

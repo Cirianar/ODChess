@@ -9,6 +9,8 @@ import cv2
 import torch
 import torch.backends.cudnn as cudnn
 
+from libs.window import Window
+
 FILE = Path(__file__).resolve()
 
 os.chdir(".")
@@ -66,15 +68,17 @@ class ObjectDetector:
 
         # Initalisation setup
         self.source = str(self.source) 
-        self.webcam = True
         self.weights = WEIGHTS
 
         self.set_logging()
         self.device = self.select_device(self.device)
         self.half &= self.device.type != 'cpu'  # half precision only supported on CUDA
 
+        self.infowindow = Window()
+
     def loadModel(self):
-        stride, names = 64, [f'class{i}' for i in range(1000)]  # assign defaults
+        stride = 64
+        names = [f'class{i}' for i in range(1000)]  # assign defaults
         pt = ".pt"
 
         model = self.attempt_load(self.weights, map_location=self.device)
@@ -96,19 +100,20 @@ class ObjectDetector:
 
     def scoreFrame(self, det, i, names, seen, im0s, img, t3, t2):
         seen += 1
-        if self.webcam:  # batch_size >= 1
-            s, im0 = f'{i}: ', im0s[i].copy()
+        
+        printString = f'{i}: '
+        im0 = im0s[i].copy()
 
-        s += '%gx%g ' % img.shape[2:]  # print string
+        printString += 'Input image dim(%gx%g), ' % img.shape[2:][::-1]  # adds the dimensions of the image to the print string
         annotator = self.Annotator(im0, line_width=self.line_thickness, example=str(names))
 
         if len(det):
             # Rescale boxes from img_size to im0 size
             det[:, :4] = self.scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
             # Print results
-            for c in det[:, -1].unique():
-                n = (det[:, -1] == c).sum()  # detections per class
-                s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+            for i in det[:, -1].unique():
+                numDetections = (det[:, -1] == i).sum()  # detections per class
+                printString += f"{numDetections} {names[int(i)]}{'s' * (numDetections > 1)}, "  # adds the number of detected objects and type of object to print string
 
             # Write results
             for *xyxy, conf, cls in reversed(det):
@@ -119,7 +124,7 @@ class ObjectDetector:
                     annotator.box_label(xyxy, label, color=self.colors(c, True))
 
         # Print time (inference-only)
-        print(f'{s}Done. ({t3 - t2:.3f}s)')
+        print(f'{printString}Done. ({t3 - t2:.3f}s)')
 
         # Stream results
         result = annotator.result()
@@ -148,14 +153,21 @@ class ObjectDetector:
         dt[2] += self.time_sync() - t3
 
         return pred, t3, t2, dt
+    
+    def resizeResults(self, results, scale_percent):
+        width = int(results.shape[1] * scale_percent)
+        height = int(results.shape[0] * scale_percent)
+        dim = (width, height)
+
+        results = cv2.resize(results, dim)
+        return results
             
     @torch.no_grad()
     def run(self):
         model, stride, names, pt = self.loadModel()
         dataset = self.loadStream(stride, pt)
 
-        if pt and self.device.type != 'cpu':
-            model(torch.zeros(1, 3, *self.imgsz).to(self.device).type_as(next(model.parameters())))  # run once
+        self.infowindow.buildWidgets(names)
 
         timeStamp = [0.0, 0.0, 0.0]
 
@@ -166,7 +178,14 @@ class ObjectDetector:
                 numSeenObjects = 0
                 numSeenObjects, imageResult = self.scoreFrame(det, i, names, numSeenObjects, im0s, img, time3, time2)
                 
-                if self.view_img:
+                imageResult = self.resizeResults(imageResult, 1.5)
+
+                self.infowindow.updateWindow(det, names, imageResult)
+
+                if 0xFF == ord('q'):
+                    print(f"Quit program on '{0xFF}' click!")
+                    break
+                elif self.view_img:
                     cv2.imshow("ODChess", imageResult)
                     cv2.waitKey(1)  # 1 millisecond
 
