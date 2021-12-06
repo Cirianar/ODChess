@@ -21,6 +21,8 @@ __Download and install steps__
       - torchvision
       - matplotlib
       - seaborn
+     
+     Or by using the command `$ pip install -r path\\to\\ODChess\requirements.txt`
 
 __Usage__
   1) Activate the new environment whihc was created in the install steps by using the command `$ activate myenv`
